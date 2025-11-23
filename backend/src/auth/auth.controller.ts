@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { GitHubAuthGuard } from './guards/github-auth.guard';
@@ -16,8 +16,11 @@ export class AuthController {
 
   @Get('github/callback')
   @UseGuards(GitHubAuthGuard)
-  async githubLoginCallback(@Req() req: any) {
-    return this.authService.login(req.user);
+  async githubLoginCallback(@Req() req: any, @Res() res: any) {
+    const data = await this.authService.login(req.user);
+    // Redirect to Frontend with token
+    // Assuming Frontend is running on localhost:5173
+    res.redirect(`http://localhost:5173/auth/callback?token=${data.access_token}`);
   }
 
   @Get('me')

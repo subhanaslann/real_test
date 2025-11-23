@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import * as Joi from 'joi';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -7,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { JobsModule } from './jobs/jobs.module';
 import { QueueModule } from './queue/queue.module';
 import { AnalysisModule } from './analysis/analysis.module';
+import { CleanupModule } from './cleanup/cleanup.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -28,11 +30,13 @@ import { AppService } from './app.service';
         GITHUB_CALLBACK_URL: Joi.string().required(),
       }),
     }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     UsersModule,
     QueueModule,
     JobsModule,
+    CleanupModule,
   ],
   controllers: [AppController],
   providers: [AppService],

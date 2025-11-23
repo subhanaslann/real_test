@@ -65,13 +65,21 @@ export class AnalysisProcessor extends WorkerHost {
       });
 
       console.log(`İş bitti: JobID ${job.data.jobId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error(`İş hatası JobID ${job.data.jobId}:`, error);
-      // Handle failure
+      // Handle failure with error message
       await this.prisma.job.update({
         where: { id: job.data.jobId },
-        data: { status: JobStatus.FAILED },
+        data: { 
+          status: JobStatus.FAILED,
+          result: {
+            error: error?.message || 'Unknown error occurred',
+            stack: error?.stack,
+          } as any
+        },
       });
+      // Don't rethrow if we want to mark it as failed in BullMQ without retrying immediately (or use specific BullMQ settings)
+      // Throwing error here makes BullMQ mark it as Failed.
       throw error;
     } finally {
       // 6. Cleanup
