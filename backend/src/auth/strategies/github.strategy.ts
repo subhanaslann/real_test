@@ -20,7 +20,7 @@ export class GitHubStrategy extends PassportStrategy(Strategy, 'github') {
 
   async validate(accessToken: string, refreshToken: string, profile: any, done: any) {
     try {
-      const user = await this.authService.validateOAuthLogin(profile);
+      const user = await this.authService.validateOAuthLogin(profile, accessToken);
       done(null, user);
     } catch (err) {
       done(err, false);

@@ -17,8 +17,9 @@ export class UsersService {
     username: string;
     avatarUrl?: string;
     email?: string;
+    githubAccessToken?: string;
   }): Promise<User> {
-    const { githubId, username, avatarUrl, email } = data;
+    const { githubId, username, avatarUrl, email, githubAccessToken } = data;
 
     return this.prisma.user.upsert({
       where: { githubId },
@@ -26,12 +27,14 @@ export class UsersService {
         username,
         avatarUrl,
         email,
+        githubAccessToken,
       },
       create: {
         githubId,
         username,
         avatarUrl,
         email,
+        githubAccessToken,
       },
     });
   }

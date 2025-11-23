@@ -32,4 +32,10 @@ export class AuthController {
   getProfile(@Req() req: any) {
     return req.user;
   }
+
+  @Get('repos')
+  @UseGuards(JwtAuthGuard)
+  async getRepos(@Req() req: any) {
+    return this.authService.fetchUserRepos(req.user.userId);
+  }
 }
