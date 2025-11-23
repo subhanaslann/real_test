@@ -11,10 +11,13 @@ export class JobsService {
   constructor(
     private prisma: PrismaService,
     @InjectQueue(ANALYSIS_QUEUE) private analysisQueue: Queue,
-  ) {}
+  ) { }
 
   async createJob(userId: number, repoUrl: string): Promise<Job> {
-    // 1. Create Job in DB
+    // 1. Fetch User to get Token
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+
+    // 2. Create Job in DB
     const job = await this.prisma.job.create({
       data: {
         userId,
@@ -23,10 +26,11 @@ export class JobsService {
       },
     });
 
-    // 2. Add to BullMQ
+    // 3. Add to BullMQ
     await this.analysisQueue.add('analyze', {
       jobId: job.id,
       repoUrl: job.repoUrl,
+      token: (user as any)?.githubAccessToken,
     });
 
     return job;

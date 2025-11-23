@@ -18,7 +18,7 @@ export class AnalysisProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<{ jobId: number; repoUrl: string }>): Promise<any> {
+  async process(job: Job<{ jobId: number; repoUrl: string; token?: string }>): Promise<any> {
     console.log(`İş alındı: JobID ${job.data.jobId}`);
     let projectPath: string | null = null;
 
@@ -30,7 +30,7 @@ export class AnalysisProcessor extends WorkerHost {
 
     try {
       // 2. Clone Repository
-      projectPath = await this.gitService.cloneRepository(job.data.repoUrl);
+      projectPath = await this.gitService.cloneRepository(job.data.repoUrl, job.data.token);
 
       // 3. Scan Files
       const scanResult = await this.fileScannerService.scanProject(projectPath);
@@ -70,7 +70,7 @@ export class AnalysisProcessor extends WorkerHost {
       // Handle failure with error message
       await this.prisma.job.update({
         where: { id: job.data.jobId },
-        data: { 
+        data: {
           status: JobStatus.FAILED,
           result: {
             error: error?.message || 'Unknown error occurred',

@@ -1,7 +1,7 @@
 FROM node:20-slim AS builder
 
 # Install OpenSSL for Prisma
-RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y openssl ca-certificates git && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -25,7 +25,7 @@ RUN npm run build
 FROM node:20-slim
 
 # Install OpenSSL for Prisma
-RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y openssl ca-certificates git && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

@@ -9,17 +9,23 @@ import { v4 as uuidv4 } from 'uuid';
 export class GitService {
   private readonly logger = new Logger(GitService.name);
 
-  async cloneRepository(repoUrl: string): Promise<string> {
+  async cloneRepository(repoUrl: string, token?: string): Promise<string> {
     const tempId = uuidv4();
     const targetDir = path.join(os.tmpdir(), 'flutter-sentinel', tempId);
-    
+
     try {
       await fs.ensureDir(targetDir);
       this.logger.log(`Cloning ${repoUrl} to ${targetDir}`);
-      
+
+      let urlToClone = repoUrl;
+      if (token && repoUrl.startsWith('https://github.com/')) {
+        // Inject token: https://TOKEN@github.com/...
+        urlToClone = repoUrl.replace('https://github.com/', `https://${token}@github.com/`);
+      }
+
       const git: SimpleGit = simpleGit();
-      await git.clone(repoUrl, targetDir);
-      
+      await git.clone(urlToClone, targetDir);
+
       return targetDir;
     } catch (error) {
       this.logger.error(`Failed to clone repository: ${error.message}`);
