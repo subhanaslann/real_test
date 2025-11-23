@@ -32,10 +32,16 @@ export default function Dashboard() {
   const fetchJobs = async () => {
     try {
       const data = await jobsService.getAllJobs();
-      const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setJobs(sorted);
+      if (Array.isArray(data)) {
+        const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setJobs(sorted);
+      } else {
+        console.error('Jobs data is not an array:', data);
+        setJobs([]);
+      }
     } catch (error) {
       console.error('Failed to fetch jobs', error);
+      setJobs([]);
     }
   };
 
@@ -47,9 +53,15 @@ export default function Dashboard() {
       setIsFetchingRepos(true);
       try {
         const repoData = await authService.getRepos();
-        setRepos(repoData);
+        if (Array.isArray(repoData)) {
+          setRepos(repoData);
+        } else {
+          console.error('Repo data is not an array:', repoData);
+          setRepos([]);
+        }
       } catch (err) {
         console.error('Failed to fetch repos', err);
+        setRepos([]);
         // Don't block UI, just show manual tab or empty list
       } finally {
         setIsFetchingRepos(false);
@@ -112,6 +124,14 @@ export default function Dashboard() {
   const getCoverage = (job: Job) => {
     if (job.status !== 'COMPLETED' || !job.result) return 0;
     return job.result.summary?.overallCoverage || 0;
+  };
+
+  const safeFormatDate = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    } catch (e) {
+      return 'Just now';
+    }
   };
 
   return (
@@ -253,11 +273,11 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <h3 className="font-semibold text-slate-900 text-base group-hover:text-blue-700 transition-colors">
-                            {job.repoUrl.split('/').slice(-2).join('/')}
+                            {job.repoUrl ? job.repoUrl.split('/').slice(-2).join('/') : 'Unknown Repo'}
                           </h3>
                           <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
                             <Clock className="h-3.5 w-3.5" />
-                            <span>{formatDistanceToNow(new Date(job.createdAt), { addSuffix: true })}</span>
+                            <span>{safeFormatDate(job.createdAt)}</span>
                           </div>
                         </div>
                       </div>
