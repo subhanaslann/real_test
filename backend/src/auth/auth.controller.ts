@@ -1,4 +1,5 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { GitHubAuthGuard } from './guards/github-auth.guard';
@@ -6,7 +7,10 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private configService: ConfigService,
+  ) {}
 
   @Get('github')
   @UseGuards(GitHubAuthGuard)
@@ -18,9 +22,9 @@ export class AuthController {
   @UseGuards(GitHubAuthGuard)
   async githubLoginCallback(@Req() req: any, @Res() res: any) {
     const data = await this.authService.login(req.user);
-    // Redirect to Frontend with token
-    // Assuming Frontend is running on localhost:5173
-    res.redirect(`http://localhost:5173/auth/callback?token=${data.access_token}`);
+    // Redirect to Frontend with token (using environment variable)
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    res.redirect(`${frontendUrl}/auth/callback?token=${data.access_token}`);
   }
 
   @Get('me')
