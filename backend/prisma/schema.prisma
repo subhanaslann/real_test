@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  githubId  String   @unique
+  username  String
+  email     String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  jobs      Job[]
+}
+
+enum JobStatus {
+  PENDING
+  CLONING
+  ANALYZING
+  COMPLETED
+  FAILED
+}
+
+model Job {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+  repoUrl   String
+  status    JobStatus @default(PENDING)
+  result    Json?
+  createdAt DateTime  @default(now())
+}
