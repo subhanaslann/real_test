@@ -5,6 +5,7 @@ import { JobStatus } from '@prisma/client';
 import { ANALYSIS_QUEUE } from '../jobs/jobs.service';
 import { GitService } from '../../analysis/git.service';
 import { FileScannerService } from '../../analysis/file-scanner.service';
+import { TestPairingService } from '../../analysis/test-pairing.service';
 
 @Processor(ANALYSIS_QUEUE)
 export class AnalysisProcessor extends WorkerHost {
@@ -12,6 +13,7 @@ export class AnalysisProcessor extends WorkerHost {
     private prisma: PrismaService,
     private gitService: GitService,
     private fileScannerService: FileScannerService,
+    private testPairingService: TestPairingService,
   ) {
     super();
   }
@@ -33,12 +35,32 @@ export class AnalysisProcessor extends WorkerHost {
       // 3. Scan Files
       const scanResult = await this.fileScannerService.scanProject(projectPath);
 
-      // 4. Update status to COMPLETED
+      // 4. Pair and Analyze Coverage
+      const coverageResult = await this.testPairingService.pairAndAnalyze(
+        scanResult.libFiles,
+        scanResult.testFiles,
+        projectPath,
+      );
+
+      // Calculate overall coverage
+      const totalCoverage = coverageResult.length > 0
+        ? coverageResult.reduce((sum, item) => sum + item.coveragePercentage, 0) / coverageResult.length
+        : 0;
+
+      // 5. Update status to COMPLETED with full results
       await this.prisma.job.update({
         where: { id: job.data.jobId },
         data: {
           status: JobStatus.COMPLETED,
-          result: scanResult as any, // Storing scan result in JSON field
+          result: {
+            summary: {
+              totalFiles: scanResult.libFiles.length,
+              analyzedFiles: coverageResult.length,
+              testFiles: scanResult.testFiles.length,
+              overallCoverage: Math.round(totalCoverage * 100) / 100,
+            },
+            details: coverageResult,
+          } as any,
         },
       });
 
@@ -52,7 +74,7 @@ export class AnalysisProcessor extends WorkerHost {
       });
       throw error;
     } finally {
-      // 5. Cleanup
+      // 6. Cleanup
       if (projectPath) {
         await this.gitService.removeDirectory(projectPath);
       }
