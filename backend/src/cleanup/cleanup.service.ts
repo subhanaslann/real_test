@@ -33,7 +33,7 @@ export class CleanupService {
              this.logger.log(`Deleting old directory: ${itemPath} (Age: ${(age / 3600000).toFixed(2)} hours)`);
              await fs.remove(itemPath);
           }
-        } catch (err) {
+        } catch (err: any) {
           this.logger.error(`Error processing item ${itemPath}: ${err.message}`);
         }
       }

@@ -16,7 +16,7 @@ export class DartAnalyzerService {
     try {
       const content = await fs.readFile(filePath, 'utf-8');
       return this.extractFunctions(content);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to analyze file ${filePath}: ${error.message}`);
       return [];
     }

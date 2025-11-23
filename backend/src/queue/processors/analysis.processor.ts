@@ -1,8 +1,8 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { JobStatus } from '@prisma/client';
-import { ANALYSIS_QUEUE } from '../jobs/jobs.service';
+import { ANALYSIS_QUEUE } from '../../jobs/jobs.service';
 import { GitService } from '../../analysis/git.service';
 import { FileScannerService } from '../../analysis/file-scanner.service';
 import { TestPairingService } from '../../analysis/test-pairing.service';
