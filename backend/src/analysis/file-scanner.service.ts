@@ -6,10 +6,11 @@ import * as path from 'path';
 export interface FileInfo {
   path: string;
   size: number;
+  extension: string;
 }
 
 export interface ScanResult {
-  libFiles: FileInfo[];
+  sourceFiles: FileInfo[];
   testFiles: FileInfo[];
 }
 
@@ -20,52 +21,63 @@ export class FileScannerService {
   async scanProject(projectPath: string): Promise<ScanResult> {
     this.logger.log(`Scanning project at ${projectPath}`);
 
-    // Find Flutter project root by looking for pubspec.yaml
-    let flutterProjectPath = projectPath;
-    const pubspecFiles = await glob('**/pubspec.yaml', {
+    // Patterns for source and test files
+    // We scan everything and then classify
+    const patterns = ['**/*.dart', '**/*.ts'];
+    const ignore = [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/.*/**',
+      '**/*.d.ts', // Ignore declaration files
+      '**/ios/**',
+      '**/android/**',
+      '**/web/**'
+    ];
+
+    const files = await glob(patterns, {
       cwd: projectPath,
-      ignore: ['**/.*/**', '**/build/**'],
+      ignore: ignore,
     });
 
-    if (pubspecFiles.length > 0) {
-      // Use the first pubspec.yaml found (or pick the shortest path for main project)
-      const mainPubspec = pubspecFiles.sort((a, b) => a.length - b.length)[0];
-      flutterProjectPath = path.join(projectPath, path.dirname(mainPubspec));
-      this.logger.log(`Found Flutter project at: ${path.dirname(mainPubspec)}`);
-    } else {
-      this.logger.warn('No pubspec.yaml found, scanning entire repository');
-    }
+    this.logger.log(`Total files found: ${files.length}`);
 
-    const dartFiles = await glob('**/*.dart', {
-      cwd: flutterProjectPath,
-      ignore: ['**/.*/**', '**/build/**', '**/ios/**', '**/android/**', '**/web/**'],
-    });
-
-    this.logger.log(`Total .dart files found: ${dartFiles.length}`);
-    if (dartFiles.length > 0 && dartFiles.length <= 10) {
-      this.logger.log(`Dart files: ${dartFiles.join(', ')}`);
-    }
-
-    const libFiles: FileInfo[] = [];
+    const sourceFiles: FileInfo[] = [];
     const testFiles: FileInfo[] = [];
 
-    for (const file of dartFiles) {
-      const fullPath = path.join(flutterProjectPath, file);
+    for (const file of files) {
+      const fullPath = path.join(projectPath, file);
       const stats = await fs.stat(fullPath);
-      
+      const ext = path.extname(file);
+
       const fileInfo: FileInfo = {
         path: file,
         size: stats.size,
+        extension: ext
       };
 
-      if (file.startsWith('lib/') || file.startsWith('lib\\')) {
-        libFiles.push(fileInfo);
-      } else if (file.startsWith('test/') || file.startsWith('test\\')) {
+      // Classification logic
+      const isTest = this.isTestFile(file);
+
+      if (isTest) {
         testFiles.push(fileInfo);
+      } else {
+        sourceFiles.push(fileInfo);
       }
     }
 
-    this.logger.log(`Found ${libFiles.length} lib files and ${testFiles.length} test files.`);
-    return { libFiles, testFiles };
+    this.logger.log(`Found ${sourceFiles.length} source files and ${testFiles.length} test files.`);
+    return { sourceFiles, testFiles };
+  }
+
+  private isTestFile(filePath: string): boolean {
+    const lower = filePath.toLowerCase();
+    return (
+      lower.includes('/test/') ||
+      lower.includes('\\test\\') ||
+      lower.endsWith('_test.dart') ||
+      lower.endsWith('.spec.ts') ||
+      lower.endsWith('.test.ts')
+    );
   }
 }

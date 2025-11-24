@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { jobsService, type Job } from '@/services/jobs.service';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { FileCode, CheckCircle, XCircle, Loader2, AlertCircle } from 'lucide-react';
+import { FileCode, CheckCircle, XCircle, Loader2, AlertCircle, ArrowLeft, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function JobDetails() {
@@ -77,6 +78,22 @@ export default function JobDetails() {
 
   return (
     <div className="container mx-auto h-[calc(100vh-2rem)] max-w-7xl p-4">
+      {/* Navigation Header */}
+      <div className="flex items-center justify-between mb-4">
+        <Link to="/dashboard" className="inline-flex">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Dashboard
+          </Button>
+        </Link>
+        <Link to="/guidelines">
+          <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+            <BookOpen className="h-4 w-4 mr-2" />
+            Kullanım Kılavuzu
+          </Button>
+        </Link>
+      </div>
+
       <div className="grid h-full grid-rows-[auto_1fr] gap-4">
         
         {/* Header & Stats */}

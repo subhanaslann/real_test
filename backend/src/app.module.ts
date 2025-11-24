@@ -9,6 +9,7 @@ import { JobsModule } from './jobs/jobs.module';
 import { QueueModule } from './queue/queue.module';
 import { AnalysisModule } from './analysis/analysis.module';
 import { CleanupModule } from './cleanup/cleanup.module';
+import { CreditsModule } from './credits/credits.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -38,6 +39,7 @@ import { AppService } from './app.service';
     QueueModule,
     JobsModule,
     CleanupModule,
+    CreditsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -35,6 +35,9 @@ export class UsersService {
         avatarUrl,
         email,
         githubAccessToken,
+        subscriptionTier: 'UNLIMITED', // Tüm yeni kullanıcılar sınırsız
+        creditsRemaining: 999999,
+        creditsTotal: 999999,
       },
     });
   }

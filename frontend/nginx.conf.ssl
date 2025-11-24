@@ -1,7 +1,7 @@
 # HTTP - HTTPS redirect
 server {
     listen 80;
-    server_name fluttertest.tech www.fluttertest.tech;
+    server_name helpyourslave.com www.helpyourslave.com;
     
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
@@ -16,10 +16,10 @@ server {
 server {
     listen 443 ssl;
     http2 on;
-    server_name fluttertest.tech www.fluttertest.tech;
+    server_name helpyourslave.com www.helpyourslave.com;
     
-    ssl_certificate /etc/letsencrypt/live/fluttertest.tech/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/fluttertest.tech/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/helpyourslave.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/helpyourslave.com/privkey.pem;
     
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;

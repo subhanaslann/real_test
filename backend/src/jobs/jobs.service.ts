@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Job, JobStatus } from '@prisma/client';
+import { CreditsService } from '../credits/credits.service';
 
 export const ANALYSIS_QUEUE = 'analysis-queue';
 
@@ -11,13 +12,20 @@ export class JobsService {
   constructor(
     private prisma: PrismaService,
     @InjectQueue(ANALYSIS_QUEUE) private analysisQueue: Queue,
+    private creditsService: CreditsService,
   ) { }
 
   async createJob(userId: number, repoUrl: string): Promise<Job> {
-    // 1. Fetch User to get Token
+    // 1. Kredi kontrolü - YENİ
+    const hasCredits = await this.creditsService.checkCredits(userId);
+    if (!hasCredits) {
+      throw new ForbiddenException('Insufficient credits. Please upgrade your plan.');
+    }
+
+    // 2. Fetch User to get Token
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
-    // 2. Create Job in DB
+    // 3. Create Job in DB
     const job = await this.prisma.job.create({
       data: {
         userId,
@@ -26,7 +34,10 @@ export class JobsService {
       },
     });
 
-    // 3. Add to BullMQ
+    // 4. Krediyi düş - YENİ
+    await this.creditsService.deductCredit(userId, job.id);
+
+    // 5. Add to BullMQ
     await this.analysisQueue.add('analyze', {
       jobId: job.id,
       repoUrl: job.repoUrl,

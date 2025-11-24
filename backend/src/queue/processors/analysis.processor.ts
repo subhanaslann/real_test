@@ -43,12 +43,12 @@ export class AnalysisProcessor extends WorkerHost {
       // 3. Scan Files
       console.log(`[AnalysisProcessor] Step 2/4: Scanning project files...`);
       const scanResult = await this.fileScannerService.scanProject(projectPath);
-      console.log(`[AnalysisProcessor] Scan complete - Lib files: ${scanResult.libFiles.length}, Test files: ${scanResult.testFiles.length}`);
+      console.log(`[AnalysisProcessor] Scan complete - Source files: ${scanResult.sourceFiles.length}, Test files: ${scanResult.testFiles.length}`);
 
       // 4. Pair and Analyze Coverage
       console.log(`[AnalysisProcessor] Step 3/4: Analyzing test coverage...`);
       const coverageResult = await this.testPairingService.pairAndAnalyze(
-        scanResult.libFiles,
+        scanResult.sourceFiles,
         scanResult.testFiles,
         projectPath,
       );
@@ -65,7 +65,7 @@ export class AnalysisProcessor extends WorkerHost {
       console.log(`[AnalysisProcessor] Step 4/4: Saving results to database...`);
       const resultData = {
         summary: {
-          totalFiles: scanResult.libFiles.length,
+          totalFiles: scanResult.sourceFiles.length,
           analyzedFiles: coverageResult.length,
           testFiles: scanResult.testFiles.length,
           overallCoverage: Math.round(totalCoverage * 100) / 100,

@@ -3,6 +3,8 @@ import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
 import JobDetails from '@/pages/JobDetails';
 import AuthCallback from '@/pages/AuthCallback';
+import Guidelines from '@/pages/Guidelines';
+import Pricing from '@/pages/Pricing';
 
 const ProtectedLayout = () => {
   const token = localStorage.getItem('accessToken');
@@ -23,6 +25,8 @@ function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/jobs/:id" element={<JobDetails />} />
+          <Route path="/guidelines" element={<Guidelines />} />
+          <Route path="/pricing" element={<Pricing />} />
         </Route>
       </Routes>
     </BrowserRouter>

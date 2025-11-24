@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { 
   Search, Plus, GitBranch, CheckCircle, XCircle, Clock, Loader2, 
-  LogOut, Github, LayoutDashboard
+  LogOut, Github, LayoutDashboard, BookOpen, Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,11 +12,13 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { jobsService, type Job } from '@/services/jobs.service';
 import { authService, type User } from '@/services/auth.service';
+import { creditsService, type CreditStatus } from '@/services/credits.service';
 
 export default function Dashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [repos, setRepos] = useState<any[]>([]);
+  const [creditStatus, setCreditStatus] = useState<CreditStatus | null>(null);
   
   // Form States
   const [activeTab, setActiveTab] = useState<'repos' | 'manual'>('repos');
@@ -31,14 +33,12 @@ export default function Dashboard() {
   // Data Fetching
   const fetchJobs = async () => {
     try {
-      const response: any = await jobsService.getAllJobs();
-      // Handle wrapped response: {success, data, error}
-      const data = response?.data || response;
+      const data = await jobsService.getAllJobs();
       if (Array.isArray(data)) {
         const sorted = data.sort((a: Job, b: Job) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setJobs(sorted);
       } else {
-        console.error('Jobs data is not an array:', response);
+        console.error('Jobs data is not an array:', data);
         setJobs([]);
       }
     } catch (error) {
@@ -52,21 +52,26 @@ export default function Dashboard() {
       const profile = await authService.getProfile();
       setUser(profile);
       
+      // Kredi durumunu çek
+      try {
+        const credits = await creditsService.getStatus();
+        setCreditStatus(credits);
+      } catch (err) {
+        console.error('Failed to fetch credit status', err);
+      }
+      
       setIsFetchingRepos(true);
       try {
-        const repoResponse: any = await authService.getRepos();
-        // Handle wrapped response: {success, data, error}
-        const repoData = repoResponse?.data || repoResponse;
+        const repoData = await authService.getRepos();
         if (Array.isArray(repoData)) {
           setRepos(repoData);
         } else {
-          console.error('Repo data is not an array:', repoResponse);
+          console.error('Repo data is not an array:', repoData);
           setRepos([]);
         }
       } catch (err) {
         console.error('Failed to fetch repos', err);
         setRepos([]);
-        // Don't block UI, just show manual tab or empty list
       } finally {
         setIsFetchingRepos(false);
       }
@@ -98,7 +103,10 @@ export default function Dashboard() {
       setManualUrl('');
       setSelectedRepo('');
       fetchJobs();
-    } catch (error) {
+      // Kredi durumunu güncelle
+      const credits = await creditsService.getStatus();
+      setCreditStatus(credits);
+    } catch (error: any) {
       console.error('Failed to create job', error);
       setError('Analiz başlatılamadı. Lütfen URL\'i kontrol edin.');
     } finally {
@@ -151,6 +159,24 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center gap-4">
+            <Link to="/guidelines">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                Kullanım Kılavuzu
+              </Button>
+            </Link>
+            {creditStatus && (
+              <Badge 
+                variant="outline"
+                className="px-3 py-1.5"
+              >
+                💳 ∞ Sınırsız
+              </Badge>
+            )}
             {user && (
               <div className="flex items-center gap-3 bg-slate-100 py-1.5 px-3 rounded-full">
                 <img 
@@ -175,6 +201,26 @@ export default function Dashboard() {
       </header>
 
       <main className="container mx-auto max-w-6xl p-6 space-y-8">
+        {/* Info Banner */}
+        <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <div className="bg-blue-100 p-2 rounded-full shrink-0">
+                <Info className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-slate-700">
+                  <strong className="text-blue-900">TypeScript</strong> ve <strong className="text-blue-900">Dart</strong> projelerini destekliyoruz.
+                  Test kapsama kuralları ve dosya isimlendirme konvansiyonları hakkında bilgi almak için
+                  <Link to="/guidelines" className="text-blue-600 hover:text-blue-700 font-semibold ml-1 underline">
+                    Kullanım Kılavuzu'nu
+                  </Link> inceleyin.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Action Area */}
         <Card className="border-slate-200 shadow-sm overflow-hidden">
           <CardHeader className="bg-slate-900 text-white pb-8 pt-6">
@@ -230,7 +276,11 @@ export default function Dashboard() {
                     </select>
                   )}
                 </div>
-                <Button onClick={handleCreateJob} disabled={isLoading || !selectedRepo} className="bg-blue-600 hover:bg-blue-700">
+                <Button 
+                  onClick={handleCreateJob} 
+                  disabled={isLoading || !selectedRepo} 
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
                   Analiz Et
                 </Button>
@@ -246,7 +296,11 @@ export default function Dashboard() {
                     onChange={(e) => setManualUrl(e.target.value)}
                   />
                 </div>
-                <Button onClick={handleCreateJob} disabled={isLoading || !manualUrl} className="bg-blue-600 hover:bg-blue-700">
+                <Button 
+                  onClick={handleCreateJob} 
+                  disabled={isLoading || !manualUrl} 
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
                   Analiz Et
                 </Button>
@@ -319,9 +373,15 @@ export default function Dashboard() {
                   <Search className="h-8 w-8 text-slate-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900">Henüz bir analiz yok</h3>
-                <p className="text-sm text-slate-500 max-w-xs mt-1">
+                <p className="text-sm text-slate-500 max-w-xs mt-1 mb-4">
                   Yukarıdaki formdan GitHub reponuzu seçerek veya URL girerek ilk analizi başlatın.
                 </p>
+                <Link to="/guidelines">
+                  <Button variant="outline" size="sm" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    Nasıl Kullanılır?
+                  </Button>
+                </Link>
               </div>
             )}
           </div>

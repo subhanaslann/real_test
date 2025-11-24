@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name fluttertest.tech www.fluttertest.tech;
+    server_name helpyourslave.com www.helpyourslave.com;
     
     # Certbot validation
     location /.well-known/acme-challenge/ {

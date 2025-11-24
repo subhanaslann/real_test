@@ -1,0 +1,10 @@
+name: dart_parser
+description: A simple command-line application to parse Dart files and extract function definitions.
+version: 1.0.0
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  analyzer: ^6.0.0
+  args: ^2.4.0
+  path: ^1.8.0

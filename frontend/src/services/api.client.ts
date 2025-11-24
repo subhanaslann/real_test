@@ -23,9 +23,16 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response Interceptor: Handle Errors (e.g. 401)
+// Response Interceptor: Handle Errors (e.g. 401) and unwrap response
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Backend wraps responses as {success, data, error}
+    // Unwrap the data automatically
+    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+      response.data = response.data.data;
+    }
+    return response;
+  },
   (error) => {
     if (error.response && error.response.status === 401) {
       // Token expired or invalid

@@ -62,7 +62,7 @@ export class AuthService {
       return repos;
     } catch (error) {
       console.error('[fetchUserRepos] Error:', error);
-      throw new Error('Failed to fetch repositories from GitHub');
+      throw new UnauthorizedException('Failed to fetch repositories from GitHub');
     }
   }
 

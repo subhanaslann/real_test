@@ -7,6 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum SubscriptionTier {
+  FREE
+  STARTER
+  PRO
+  UNLIMITED
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   githubId  String   @unique
@@ -15,7 +22,17 @@ model User {
   avatarUrl String?
   githubAccessToken String?
   createdAt DateTime @default(now())
-  jobs      Job[]
+  
+  // Subscription & Credits
+  subscriptionTier      SubscriptionTier @default(UNLIMITED)
+  creditsRemaining      Int              @default(999999)
+  creditsTotal          Int              @default(999999)
+  subscriptionStartDate DateTime         @default(now())
+  subscriptionEndDate   DateTime?
+  lastCreditReset       DateTime         @default(now())
+  
+  jobs                  Job[]
+  creditTransactions    CreditTransaction[]
 }
 
 enum JobStatus {
@@ -34,4 +51,20 @@ model Job {
   status    JobStatus @default(PENDING)
   result    Json?
   createdAt DateTime  @default(now())
+  
+  creditTransactions CreditTransaction[]
+}
+
+model CreditTransaction {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Int      // Pozitif = ekleme, Negatif = harcama
+  reason    String   // "JOB_CREATED", "MONTHLY_RESET", "PLAN_UPGRADE", "PLAN_DOWNGRADE"
+  jobId     Int?
+  job       Job?     @relation(fields: [jobId], references: [id])
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
 }
