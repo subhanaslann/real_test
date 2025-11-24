@@ -5,18 +5,19 @@ RUN apt-get update && apt-get install -y openssl ca-certificates git && rm -rf /
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and prisma schema
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
+# Install dependencies (this will run postinstall -> prisma generate)
 RUN npm ci --production=false
 
-
-# Fix permissions
-
-# Copy source code
+# Copy source code (including updated schema if any)
 COPY . .
+
+# Re-generate Prisma Client to ensure it's using the latest schema
+RUN rm -rf node_modules/.prisma node_modules/@prisma/client
+RUN npx prisma generate
 
 # Build application
 RUN npm run build
@@ -29,16 +30,18 @@ RUN apt-get update && apt-get install -y openssl ca-certificates git && rm -rf /
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and prisma schema
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install production dependencies only
+# Install production dependencies
 RUN npm ci --production
+
+# Generate Prisma Client
+RUN npx prisma generate
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 # Create logs directory
 RUN mkdir -p logs
