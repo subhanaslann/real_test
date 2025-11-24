@@ -16,8 +16,7 @@ RUN npm ci --production=false
 COPY . .
 
 # Re-generate Prisma Client to ensure it's using the latest schema
-RUN rm -rf node_modules/.prisma node_modules/@prisma/client
-RUN npx prisma generate
+RUN npm install prisma && npx prisma generate
 
 # Build application
 RUN npm run build
