@@ -20,10 +20,23 @@ export class FileScannerService {
   async scanProject(projectPath: string): Promise<ScanResult> {
     this.logger.log(`Scanning project at ${projectPath}`);
 
+    // List all files in project root to debug
+    try {
+      const allFiles = await fs.readdir(projectPath);
+      this.logger.log(`Files in project root: ${allFiles.join(', ')}`);
+    } catch (error) {
+      this.logger.error(`Failed to read project directory: ${error.message}`);
+    }
+
     const dartFiles = await glob('**/*.dart', {
       cwd: projectPath,
       ignore: ['**/.*/**', '**/build/**', '**/ios/**', '**/android/**', '**/web/**'],
     });
+
+    this.logger.log(`Total .dart files found by glob: ${dartFiles.length}`);
+    if (dartFiles.length > 0 && dartFiles.length <= 10) {
+      this.logger.log(`Dart files: ${dartFiles.join(', ')}`);
+    }
 
     const libFiles: FileInfo[] = [];
     const testFiles: FileInfo[] = [];
