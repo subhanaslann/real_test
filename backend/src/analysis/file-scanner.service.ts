@@ -67,6 +67,13 @@ export class FileScannerService {
     }
 
     this.logger.log(`Found ${sourceFiles.length} source files and ${testFiles.length} test files.`);
+    
+    // Debug: Log file paths
+    if (testFiles.length === 0) {
+      this.logger.warn('No test files found. All files:');
+      files.forEach(f => this.logger.log(`  - ${f} (isTest: ${this.isTestFile(f)})`));
+    }
+    
     return { sourceFiles, testFiles };
   }
 
