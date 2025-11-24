@@ -18,6 +18,13 @@ export class GitHubStrategy extends PassportStrategy(Strategy, 'github') {
     });
   }
 
+  // Her login'de yeniden yetkilendirme iste
+  authorizationParams(): Record<string, string> {
+    return {
+      prompt: 'consent',
+    };
+  }
+
   async validate(accessToken: string, refreshToken: string, profile: any, done: any) {
     try {
       const user = await this.authService.validateOAuthLogin(profile, accessToken);
