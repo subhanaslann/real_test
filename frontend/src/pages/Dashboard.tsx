@@ -31,11 +31,11 @@ export default function Dashboard() {
   // Data Fetching
   const fetchJobs = async () => {
     try {
-      const response = await jobsService.getAllJobs();
+      const response: any = await jobsService.getAllJobs();
       // Handle wrapped response: {success, data, error}
       const data = response?.data || response;
       if (Array.isArray(data)) {
-        const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const sorted = data.sort((a: Job, b: Job) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setJobs(sorted);
       } else {
         console.error('Jobs data is not an array:', response);
