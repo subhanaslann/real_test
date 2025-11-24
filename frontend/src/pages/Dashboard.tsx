@@ -54,7 +54,7 @@ export default function Dashboard() {
       
       setIsFetchingRepos(true);
       try {
-        const repoResponse = await authService.getRepos();
+        const repoResponse: any = await authService.getRepos();
         // Handle wrapped response: {success, data, error}
         const repoData = repoResponse?.data || repoResponse;
         if (Array.isArray(repoData)) {
