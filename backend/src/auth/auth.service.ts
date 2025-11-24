@@ -31,6 +31,11 @@ export class AuthService {
 
   async fetchUserRepos(userId: number) {
     const user = await this.usersService.findOne({ id: userId });
+    
+    console.log('[fetchUserRepos] User ID:', userId);
+    console.log('[fetchUserRepos] User found:', !!user);
+    console.log('[fetchUserRepos] Has token:', !!user?.githubAccessToken);
+    
     if (!user || !user.githubAccessToken) {
       throw new UnauthorizedException('No GitHub access token found');
     }
@@ -44,13 +49,19 @@ export class AuthService {
         },
       });
 
+      console.log('[fetchUserRepos] GitHub API Response Status:', response.status);
+      
       if (!response.ok) {
+        const errorBody = await response.text();
+        console.error('[fetchUserRepos] GitHub API Error:', response.status, errorBody);
         throw new Error(`GitHub API error: ${response.statusText}`);
       }
 
-      return await response.json();
+      const repos = await response.json();
+      console.log('[fetchUserRepos] Fetched repos count:', repos.length);
+      return repos;
     } catch (error) {
-      console.error('Error fetching repos:', error);
+      console.error('[fetchUserRepos] Error:', error);
       throw new Error('Failed to fetch repositories from GitHub');
     }
   }
