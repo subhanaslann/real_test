@@ -31,12 +31,14 @@ export default function Dashboard() {
   // Data Fetching
   const fetchJobs = async () => {
     try {
-      const data = await jobsService.getAllJobs();
+      const response = await jobsService.getAllJobs();
+      // Handle wrapped response: {success, data, error}
+      const data = response?.data || response;
       if (Array.isArray(data)) {
         const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setJobs(sorted);
       } else {
-        console.error('Jobs data is not an array:', data);
+        console.error('Jobs data is not an array:', response);
         setJobs([]);
       }
     } catch (error) {
@@ -52,11 +54,13 @@ export default function Dashboard() {
       
       setIsFetchingRepos(true);
       try {
-        const repoData = await authService.getRepos();
+        const repoResponse = await authService.getRepos();
+        // Handle wrapped response: {success, data, error}
+        const repoData = repoResponse?.data || repoResponse;
         if (Array.isArray(repoData)) {
           setRepos(repoData);
         } else {
-          console.error('Repo data is not an array:', repoData);
+          console.error('Repo data is not an array:', repoResponse);
           setRepos([]);
         }
       } catch (err) {
