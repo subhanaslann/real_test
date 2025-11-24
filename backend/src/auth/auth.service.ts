@@ -10,10 +10,16 @@ export class AuthService {
   ) {}
 
   async validateOAuthLogin(profile: any, accessToken: string): Promise<any> {
+    console.log('[validateOAuthLogin] Starting validation...');
+    console.log('[validateOAuthLogin] Profile:', JSON.stringify(profile, null, 2));
+    console.log('[validateOAuthLogin] AccessToken exists:', !!accessToken);
+    
     try {
       const { id, username, photos, emails } = profile;
       const avatarUrl = photos && photos.length > 0 ? photos[0].value : null;
       const email = emails && emails.length > 0 ? emails[0].value : null;
+
+      console.log('[validateOAuthLogin] Extracted data:', { id, username, avatarUrl, email });
 
       const user = await this.usersService.findOrCreate({
         githubId: id,
@@ -23,8 +29,10 @@ export class AuthService {
         githubAccessToken: accessToken,
       });
 
+      console.log('[validateOAuthLogin] User created/found:', user?.id);
       return user;
     } catch (err) {
+      console.error('[validateOAuthLogin] ERROR:', err);
       throw new UnauthorizedException('Could not validate GitHub login');
     }
   }
