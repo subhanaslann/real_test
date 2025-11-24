@@ -19,54 +19,75 @@ export class AnalysisProcessor extends WorkerHost {
   }
 
   async process(job: Job<{ jobId: number; repoUrl: string; token?: string }>): Promise<any> {
-    console.log(`İş alındı: JobID ${job.data.jobId}`);
+    console.log(`[AnalysisProcessor] Job received - JobID: ${job.data.jobId}, RepoURL: ${job.data.repoUrl}`);
     let projectPath: string | null = null;
 
-    // 1. Update status to ANALYZING
+    // 1. Update status to CLONING
     await this.prisma.job.update({
       where: { id: job.data.jobId },
-      data: { status: JobStatus.ANALYZING },
+      data: { status: JobStatus.CLONING },
     });
 
     try {
       // 2. Clone Repository
+      console.log(`[AnalysisProcessor] Step 1/4: Cloning repository...`);
       projectPath = await this.gitService.cloneRepository(job.data.repoUrl, job.data.token);
+      console.log(`[AnalysisProcessor] Repository cloned to: ${projectPath}`);
+
+      // Update status to ANALYZING
+      await this.prisma.job.update({
+        where: { id: job.data.jobId },
+        data: { status: JobStatus.ANALYZING },
+      });
 
       // 3. Scan Files
+      console.log(`[AnalysisProcessor] Step 2/4: Scanning project files...`);
       const scanResult = await this.fileScannerService.scanProject(projectPath);
+      console.log(`[AnalysisProcessor] Scan complete - Lib files: ${scanResult.libFiles.length}, Test files: ${scanResult.testFiles.length}`);
 
       // 4. Pair and Analyze Coverage
+      console.log(`[AnalysisProcessor] Step 3/4: Analyzing test coverage...`);
       const coverageResult = await this.testPairingService.pairAndAnalyze(
         scanResult.libFiles,
         scanResult.testFiles,
         projectPath,
       );
+      console.log(`[AnalysisProcessor] Coverage analysis complete - Analyzed files: ${coverageResult.length}`);
 
       // Calculate overall coverage
       const totalCoverage = coverageResult.length > 0
         ? coverageResult.reduce((sum, item) => sum + item.coveragePercentage, 0) / coverageResult.length
         : 0;
 
+      console.log(`[AnalysisProcessor] Overall coverage: ${totalCoverage.toFixed(2)}%`);
+
       // 5. Update status to COMPLETED with full results
+      console.log(`[AnalysisProcessor] Step 4/4: Saving results to database...`);
+      const resultData = {
+        summary: {
+          totalFiles: scanResult.libFiles.length,
+          analyzedFiles: coverageResult.length,
+          testFiles: scanResult.testFiles.length,
+          overallCoverage: Math.round(totalCoverage * 100) / 100,
+        },
+        details: coverageResult,
+      };
+
       await this.prisma.job.update({
         where: { id: job.data.jobId },
         data: {
           status: JobStatus.COMPLETED,
-          result: {
-            summary: {
-              totalFiles: scanResult.libFiles.length,
-              analyzedFiles: coverageResult.length,
-              testFiles: scanResult.testFiles.length,
-              overallCoverage: Math.round(totalCoverage * 100) / 100,
-            },
-            details: coverageResult,
-          } as any,
+          result: resultData as any,
         },
       });
 
-      console.log(`İş bitti: JobID ${job.data.jobId}`);
+      console.log(`[AnalysisProcessor] ✅ Job completed successfully - JobID: ${job.data.jobId}`);
+      console.log(`[AnalysisProcessor] Result summary:`, JSON.stringify(resultData.summary, null, 2));
     } catch (error: any) {
-      console.error(`İş hatası JobID ${job.data.jobId}:`, error);
+      console.error(`[AnalysisProcessor] ❌ Job failed - JobID: ${job.data.jobId}`);
+      console.error(`[AnalysisProcessor] Error message:`, error?.message);
+      console.error(`[AnalysisProcessor] Error stack:`, error?.stack);
+      
       // Handle failure with error message
       await this.prisma.job.update({
         where: { id: job.data.jobId },
@@ -78,12 +99,12 @@ export class AnalysisProcessor extends WorkerHost {
           } as any
         },
       });
-      // Don't rethrow if we want to mark it as failed in BullMQ without retrying immediately (or use specific BullMQ settings)
-      // Throwing error here makes BullMQ mark it as Failed.
+      
       throw error;
     } finally {
       // 6. Cleanup
       if (projectPath) {
+        console.log(`[AnalysisProcessor] Cleaning up project directory...`);
         await this.gitService.removeDirectory(projectPath);
       }
     }
