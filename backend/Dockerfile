@@ -12,11 +12,8 @@ COPY prisma ./prisma/
 # Install dependencies (this will run postinstall -> prisma generate)
 RUN npm ci --production=false
 
-# Copy source code (including updated schema if any)
+# Copy source code (node_modules excluded by .dockerignore)
 COPY . .
-
-# Re-generate Prisma Client to ensure it's using the latest schema
-RUN npm install prisma && npx prisma generate
 
 # Build application
 RUN npm run build
