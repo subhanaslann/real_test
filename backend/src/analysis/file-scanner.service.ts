@@ -20,20 +20,28 @@ export class FileScannerService {
   async scanProject(projectPath: string): Promise<ScanResult> {
     this.logger.log(`Scanning project at ${projectPath}`);
 
-    // List all files in project root to debug
-    try {
-      const allFiles = await fs.readdir(projectPath);
-      this.logger.log(`Files in project root: ${allFiles.join(', ')}`);
-    } catch (error) {
-      this.logger.error(`Failed to read project directory: ${error.message}`);
+    // Find Flutter project root by looking for pubspec.yaml
+    let flutterProjectPath = projectPath;
+    const pubspecFiles = await glob('**/pubspec.yaml', {
+      cwd: projectPath,
+      ignore: ['**/.*/**', '**/build/**'],
+    });
+
+    if (pubspecFiles.length > 0) {
+      // Use the first pubspec.yaml found (or pick the shortest path for main project)
+      const mainPubspec = pubspecFiles.sort((a, b) => a.length - b.length)[0];
+      flutterProjectPath = path.join(projectPath, path.dirname(mainPubspec));
+      this.logger.log(`Found Flutter project at: ${path.dirname(mainPubspec)}`);
+    } else {
+      this.logger.warn('No pubspec.yaml found, scanning entire repository');
     }
 
     const dartFiles = await glob('**/*.dart', {
-      cwd: projectPath,
+      cwd: flutterProjectPath,
       ignore: ['**/.*/**', '**/build/**', '**/ios/**', '**/android/**', '**/web/**'],
     });
 
-    this.logger.log(`Total .dart files found by glob: ${dartFiles.length}`);
+    this.logger.log(`Total .dart files found: ${dartFiles.length}`);
     if (dartFiles.length > 0 && dartFiles.length <= 10) {
       this.logger.log(`Dart files: ${dartFiles.join(', ')}`);
     }
@@ -42,7 +50,7 @@ export class FileScannerService {
     const testFiles: FileInfo[] = [];
 
     for (const file of dartFiles) {
-      const fullPath = path.join(projectPath, file);
+      const fullPath = path.join(flutterProjectPath, file);
       const stats = await fs.stat(fullPath);
       
       const fileInfo: FileInfo = {
