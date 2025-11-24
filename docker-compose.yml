@@ -56,8 +56,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:-kX9mP2vN8qR5wT7yU4bL6hF3jD0sA1gZ9xC8vB7nM5qW2eR4tY6uI8oP0aS3dF5}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
-      GITHUB_CALLBACK_URL: https://fluttertest.tech/api/v1/auth/github/callback
-      FRONTEND_URL: https://fluttertest.tech
+      GITHUB_CALLBACK_URL: https://helpyourslave.com/api/v1/auth/github/callback
+      FRONTEND_URL: https://helpyourslave.com
     ports:
       - "3000:3000"
     volumes:
