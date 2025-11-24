@@ -73,11 +73,22 @@ export class FileScannerService {
   private isTestFile(filePath: string): boolean {
     const lower = filePath.toLowerCase();
     return (
+      // Folder-based detection
       lower.includes('/test/') ||
       lower.includes('\\test\\') ||
+      lower.includes('/tests/') ||
+      lower.includes('\\tests\\') ||
+      lower.includes('/__tests__/') ||
+      lower.includes('\\__tests__\\') ||
+      // File naming conventions - Dart
       lower.endsWith('_test.dart') ||
+      // File naming conventions - TypeScript/JavaScript
       lower.endsWith('.spec.ts') ||
-      lower.endsWith('.test.ts')
+      lower.endsWith('.test.ts') ||
+      lower.endsWith('.spec.tsx') ||
+      lower.endsWith('.test.tsx') ||
+      lower.endsWith('.spec.js') ||
+      lower.endsWith('.test.js')
     );
   }
 }
