@@ -1,10 +1,9 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, ArrowLeft, Crown, Zap, Sparkles, Infinity } from 'lucide-react';
-import { apiClient } from '@/services/api.client';
+// import { apiClient } from '@/services/api.client'; // Beta döneminde kullanılmıyor
 
 const plans = [
   {
@@ -70,23 +69,10 @@ const plans = [
 ];
 
 export default function Pricing() {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState<string | null>(null);
-
-  const handleUpgrade = async (tier: string) => {
-    setLoading(tier);
-    try {
-      await apiClient.post('/subscription/change', { tier });
-      
-      // Başarılı, dashboard'a dön
-      navigate('/dashboard');
-    } catch (error: any) {
-      console.error('Failed to change plan:', error);
-      alert(error.response?.data?.message || 'Plan değiştirme başarısız oldu.');
-    } finally {
-      setLoading(null);
-    }
-  };
+  // Beta döneminde tüm özellikler ücretsiz olduğu için upgrade fonksiyonu devre dışı
+  // const navigate = useNavigate();
+  // const [loading, setLoading] = useState<string | null>(null);
+  // const handleUpgrade = async (tier: string) => { ... };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
